@@ -6,20 +6,20 @@ from src.repo import repository
 
 base_input = ["AZAZAZAZAZ_8", "абвгдежН7_", "абвгдежН7_"]
 class Test(unittest.TestCase):
-    @patch("builtins.input", side_effect=[base_input,base_input])
+    @patch("builtins.input", side_effect=base_input)
     def test_add_user(self,mock_input):
         c = controller()
         value,err = c.add()
         self.assertTrue(value)
 
-    @patch("builtins.input", side_effect=[base_input,base_input])
+    @patch("builtins.input", side_effect=base_input*2)
     def test_get_user(self,mock_input):
         c = controller()
         value, err = c.add()
         value,err = c.get()
         self.assertIsNotNone(value)
 
-    @patch("builtins.input", side_effect=[base_input,base_input])
+    @patch("builtins.input", side_effect=base_input *2)
     def test_delete_user(self,mock_input):
         c = controller()
         value, err = c.add()
