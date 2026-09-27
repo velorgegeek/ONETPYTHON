@@ -13,6 +13,9 @@ class repository:
                            RepeatPassword Text,
                            ResultAutorization BOOLEAN,
                            TextError TEXT)''')
+
+    def __del__(self):
+        self.connection.close()
     def add(self,login,password,resultAutorization,textError) ->(bool,str):
         try:
             self.cursor.execute(
