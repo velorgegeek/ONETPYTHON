@@ -29,7 +29,7 @@ class test_controller(unittest.TestCase):
         self.assertTrue(value,"не удалилось")
 
 
-class Test_Repository(unittest.TestCase):
+class test_Repository(unittest.TestCase):
     def test_set_bd(self):
         self.repo = repository()
         self.assertIsNotNone(self.repo.connection, "Не создается соединение")
