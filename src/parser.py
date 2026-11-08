@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-
+import time
+from urllib.parse import urljoin
 
 class ForumParser:
     def get_html(self,url) ->requests.Response:
@@ -39,20 +40,44 @@ class ForumParser:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
         }
-        response = requests.get(page, headers=headers, timeout=10)
-        bs = BeautifulSoup(response.text, 'html.parser')
-
-        posts = bs.select('table[id^="post"]')
 
         results = []
-        for p in posts:
-            name = p.find('a', class_='bigusername')
-            message = p.find('div', id=re.compile(r'^post_message_\d+$'))
-            post_id = message['id'].replace('post_message_', '')
+        this_page = page
+        set_result = set()
+        while True:
+            print(this_page)
+            response = requests.get(this_page, headers=headers, timeout=20)
 
-            text = message.get_text(strip=True)
-            result = [post_id, name.get_text(), text]
+            bs = BeautifulSoup(response.text, 'html.parser')
 
-            results.append(result)
+            posts = bs.select('table[id^="post"]')
+            if not posts:
+                break
 
+
+
+            for p in posts:
+                name = p.find('a', class_='bigusername')
+                message = p.find('div', id=re.compile(r'^post_message_\d+$'))
+
+                for quote in message.select('div.bbcode_container'):
+                    quote.decompose()
+
+                post_id = message['id'].replace('post_message_', '')
+                if post_id in set_result:
+                    continue
+                set_result.add(post_id)
+                text = message.get_text(separator=' ',strip=True)
+                result = [post_id, name.get_text(), text]
+
+                results.append(result)
+
+            next_link = bs.find('a', rel='next')
+            if not next_link or not next_link.get('href'):
+                break
+
+            this_page = urljoin(this_page, next_link['href'])
+
+
+            time.sleep(1)
         return results
